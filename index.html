@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071F22">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Срок</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: колонка шириной с телефон, карточки по две в ряд, нижняя панель из 4 вкладок.
+   Один тёмно-бирюзовый вид без светлой темы. */
+:root{
+  --bg:#071F22;
+  --surface:#0D2C2F;
+  --surface-2:#133A3D;
+  --fg:#E3F4F1;
+  --muted:#8DB6B2;
+  --line:#1C4749;
+  --brand:#2DC2AE;
+  --on-brand:#03201D;
+  --brand-soft:#134843;
+  --warn:#F2BE5C;
+  --warn-soft:#3A3217;
+  --bad:#FF8E7E;
+  --bad-soft:#42211F;
+  --code-bg:#FFFFFF;
+  --code-ink:#111111;
+  --font:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --tab-h:68px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{
+  background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px 0;
+}
+.app{max-width:480px;margin:0 auto;padding-bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 28px)}
+h1,h2,p{margin:0}
+h1{font-size:32px;line-height:1.1;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:17px;font-weight:700;line-height:1.25}
+.eyebrow{font-size:14px;color:var(--muted);margin-bottom:4px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+.head>div{min-width:0}
+.stack{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+code{font-family:var(--mono);font-size:13px;background:var(--surface-2);padding:2px 6px;border-radius:6px}
+
+/* controls */
+input,select,textarea,button{font:inherit;color:inherit}
+input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{
+  width:100%;background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;min-width:0;
+}
+textarea{min-height:200px;resize:vertical;line-height:1.6;font-size:15px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,label.btn:focus-within{outline:2px solid var(--brand);outline-offset:2px}
+.field{display:flex;flex-direction:column;gap:6px;position:relative}
+.field>label{font-size:13px;font-weight:600;color:var(--muted)}
+.inline{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row{display:flex;gap:8px;align-items:stretch}
+.row input{flex:1}
+.sq{width:50px;flex:none;border:1.5px solid var(--line);background:var(--bg);border-radius:14px;display:grid;place-items:center;cursor:pointer;color:var(--brand)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid var(--line);background:var(--surface-2);border-radius:14px;padding:11px 16px;font-weight:700;font-size:15px;cursor:pointer;min-height:46px}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.btn.primary:disabled{opacity:.45;cursor:not-allowed}
+.btn.full{width:100%;padding:15px 16px;border-radius:16px;font-size:16px}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px}
+.link{background:none;border:0;padding:6px 8px;margin:-6px -8px;color:var(--brand);font-weight:700;font-size:13px;cursor:pointer;border-radius:8px}
+.link.bad{color:var(--bad)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer;min-height:38px}
+.chip.on{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg);border-radius:14px;padding:4px}
+.seg button{border:0;background:none;border-radius:11px;padding:10px 8px;font-weight:700;font-size:14px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--surface-2);color:var(--fg)}
+.fab{width:48px;height:48px;flex:none;border:0;border-radius:16px;background:var(--brand);color:var(--on-brand);display:grid;place-items:center;cursor:pointer}
+.err{color:var(--bad);font-size:13px;font-weight:600}
+.err:empty,.calc:empty,.tagline:empty{display:none}
+.calc{font-size:14px;font-weight:600;color:var(--brand)}
+.tagline{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.sug{display:flex;flex-direction:column;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.sug:empty{display:none}
+.sug button{display:flex;justify-content:space-between;gap:8px;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;padding:11px 14px;cursor:pointer;font-weight:600}
+.sug button:last-child{border-bottom:0}
+.sug span{color:var(--muted);font-weight:500;font-size:13px;white-space:nowrap}
+
+/* pills */
+.pill{display:inline-block;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.ok{background:var(--brand-soft);color:var(--brand)}
+.pill.dup{background:var(--surface-2);color:var(--muted)}
+.sum{display:flex;flex-wrap:wrap;gap:8px}
+
+/* cards grid */
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.t-name{font-weight:700;font-size:15px;line-height:1.25;overflow-wrap:anywhere}
+.t-date{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.t-days{display:flex;align-items:baseline;gap:6px;margin-top:2px}
+.t-days strong{font-size:36px;line-height:1;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.t-days span{font-size:12px;color:var(--muted);line-height:1.2}
+.t-days.bad strong{color:var(--bad)}
+.t-days.warn strong{color:var(--warn)}
+.t-days.ok strong{color:var(--brand)}
+.t-bottom{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:4px}
+.t-rem{display:flex;gap:6px;align-items:flex-start;font-size:12px;color:var(--muted)}
+.t-rem svg{flex:none;margin-top:1px}
+.t-rem.due{color:var(--warn);font-weight:600}
+.t-foot{display:flex;flex-wrap:wrap;gap:6px 14px;border-top:1px solid var(--line);padding-top:10px}
+.tile.dim .t-name{text-decoration:line-through;color:var(--muted)}
+.tile.dim .pill{opacity:.5}
+.tile .mono{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.errrow{padding:10px 12px;border-radius:12px;background:var(--bad-soft);color:var(--bad);font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.errrow code{background:transparent;padding:0;color:inherit}
+.cta-wrap{position:sticky;bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 12px);padding-top:14px;background:linear-gradient(to top,var(--bg) 72%,transparent)}
+.banner{display:flex;gap:12px;align-items:flex-start;background:var(--warn-soft);color:var(--warn);border-radius:18px;padding:14px 16px}
+.banner b{display:block;color:var(--fg)}
+.banner span{font-size:14px}
+.empty{padding:26px 4px;text-align:center;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:12px}
+
+/* barcode */
+.codebox{background:var(--code-bg);color:var(--code-ink);border-radius:18px;padding:16px;display:flex;justify-content:center}
+.codebox svg{width:100%;max-width:320px;height:auto;display:block}
+.bigin{font-family:var(--mono);font-size:24px!important;letter-spacing:.14em;font-weight:600}
+.check{display:flex;align-items:center;gap:14px;background:var(--brand-soft);color:var(--brand);border-radius:16px;padding:12px 16px}
+.check.bad{background:var(--bad-soft);color:var(--bad)}
+.check .n{font-size:30px;font-weight:800;line-height:1}
+.check b{display:block;color:var(--fg);font-size:15px}
+.check span{font-size:13px}
+
+/* scanner */
+#scan{position:fixed;inset:0;z-index:20;background:#000;display:flex}
+#scanVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scan-frame{position:absolute;left:50%;top:42%;width:min(80vw,340px);aspect-ratio:1.8;transform:translate(-50%,-50%);border:2.5px solid var(--brand);border-radius:18px;box-shadow:0 0 0 100vmax rgba(0,0,0,.55)}
+#scanMsg{position:absolute;left:16px;right:16px;bottom:calc(100px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff;font-weight:600}
+.scan-bar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;justify-content:center;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+
+/* tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.tabs-in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;border-radius:12px}
+.tab i{width:52px;height:30px;border-radius:15px;display:grid;place-items:center}
+.tab[aria-current=page]{color:var(--brand);font-weight:700}
+.tab[aria-current=page] i{background:var(--brand-soft)}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+#toast{position:fixed;left:50%;bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);z-index:30;
+  background:var(--fg);color:var(--bg);padding:11px 18px;border-radius:14px;font-weight:600;font-size:14px;max-width:min(92vw,420px);text-align:center;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+<style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:#071F22}body{margin:0}</style>
+</head>
+<body>
+
+<div class="app"><main id="view"></main></div>
+
+<nav class="tabs" aria-label="Разделы">
+  <div class="tabs-in">
+    <button class="tab" data-tab="import"><i><svg class="ic" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></svg></i>Импорт</button>
+    <button class="tab" data-tab="items"><i><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg></i>Товары</button>
+    <button class="tab" data-tab="catalog"><i><svg class="ic" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4zM5 17a3 3 0 0 1 3-3h11"/></svg></i>Каталог</button>
+    <button class="tab" data-tab="barcode"><i><svg class="ic" viewBox="0 0 24 24"><path d="M4 5v14M7.5 5v14M11 5v14M14 5v14M17.5 5v14M20 5v14"/></svg></i>Штрихкод</button>
+  </div>
+</nav>
+
+<div id="scan" hidden role="dialog" aria-modal="true" aria-label="Сканер штрихкода">
+  <video id="scanVideo" playsinline muted></video>
+  <div class="scan-frame"></div>
+  <p id="scanMsg" role="status"></p>
+  <div class="scan-bar">
+    <label class="btn" for="scanPhoto">Из фото</label>
+    <input id="scanPhoto" type="file" accept="image/*" capture="environment" hidden>
+    <button class="btn" id="scanClose" type="button">Закрыть</button>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const uid=()=>Math.random().toString(36).slice(2,9);
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const plural=(n,f)=>{n=Math.abs(n);const a=n%10,b=n%100;return a===1&&b!==11?f[0]:(a>=2&&a<=4&&(b<10||b>=20))?f[1]:f[2]};
+
+/* ---------- даты: всё считаем в номерах дней ---------- */
+const dayNum=(y,m,d)=>Math.round(Date.UTC(y,m-1,d)/864e5);
+const _n=new Date();
+const TODAY=dayNum(_n.getFullYear(),_n.getMonth()+1,_n.getDate());
+const toDate=n=>new Date(n*864e5);
+const iso2num=s=>{const [y,m,d]=s.split('-').map(Number);return dayNum(y,m,d)};
+const num2iso=n=>{const d=toDate(n);return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())};
+const fmt=(n,full=true)=>{const d=toDate(n);return pad(d.getUTCDate())+'.'+pad(d.getUTCMonth()+1)+(full?'.'+d.getUTCFullYear():'')};
+const DAYS=['день','дня','дней'];
+const UNITS={'д':['день','дня','дней'],'мес':['месяц','месяца','месяцев'],'г':['год','года','лет']};
+const shelfStr=c=>c.shelfValue?`${c.shelfValue} ${plural(c.shelfValue,UNITS[c.shelfUnit])}`:'срок не указан';
+function addShelf(n,v,u){
+  if(u==='д')return n+v;
+  const d=toDate(n);let y=d.getUTCFullYear(),m=d.getUTCMonth();const dd=d.getUTCDate();
+  if(u==='мес')m+=v;else y+=v;
+  const first=new Date(Date.UTC(y,m,1));
+  const last=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0)).getUTCDate();
+  return dayNum(first.getUTCFullYear(),first.getUTCMonth()+1,Math.min(dd,last));
+}
+
+/* ---------- хранение: Telegram CloudStorage, иначе этот браузер ---------- */
+const TG=window.Telegram&&window.Telegram.WebApp;
+const CS=(TG&&TG.initData&&TG.CloudStorage)?TG.CloudStorage:null;
+const local={
+  get(k,def){try{const v=localStorage.getItem('srok.'+k);return v?JSON.parse(v):def}catch(e){return def}},
+  set(k,v){try{localStorage.setItem('srok.'+k,JSON.stringify(v))}catch(e){}}
+};
+const csGet=keys=>new Promise(res=>CS.getItems(keys,(e,v)=>res(e?{}:(v||{}))));
+const csSet=(k,v)=>new Promise(res=>CS.setItem(k,v,()=>res()));
+const csDel=keys=>new Promise(res=>keys.length?CS.removeItems(keys,()=>res()):res());
+async function cloudRead(name){
+  const m=await csGet([name+'_n']);const n=+m[name+'_n']||0;if(!n)return null;
+  const keys=Array.from({length:n},(_,i)=>`${name}_${i}`);
+  const p=await csGet(keys);
+  try{return JSON.parse(keys.map(k=>p[k]||'').join(''))}catch(e){return null}
+}
+async function cloudWrite(name,val){
+  const parts=JSON.stringify(val).match(/[\s\S]{1,3000}/g)||['[]'];
+  const old=+((await csGet([name+'_n']))[name+'_n'])||0;
+  for(let i=0;i<parts.length;i++)await csSet(`${name}_${i}`,parts[i]);
+  await csSet(name+'_n',String(parts.length));
+  const stale=[];for(let i=parts.length;i<old;i++)stale.push(`${name}_${i}`);
+  await csDel(stale);
+}
+const DEF_SET={offsets:[4,3,2,0],time:'09:00'};
+let items=local.get('items',[]);
+let catalog=local.get('catalog',[]);
+let settings=Object.assign({},DEF_SET,local.get('settings',{}));
+let st,queue=Promise.resolve();
+function flush(){
+  if(!CS)return;
+  queue=queue.then(async()=>{await cloudWrite('items',items);await cloudWrite('catalog',catalog);await cloudWrite('settings',settings)}).catch(()=>{});
+}
+function save(){
+  local.set('items',items);local.set('catalog',catalog);local.set('settings',settings);
+  clearTimeout(st);st=setTimeout(flush,400);
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(st);flush()}});
+
+/* ---------- разбор заметки ---------- */
+function parseNote(text){
+  const rows=[];
+  text.split(/\r?\n/).forEach((raw,i)=>{
+    const line=raw.trim();if(!line)return;
+    const m=line.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{4}|\d{2})(?!\d)\s*[-–:]?\s*(.*)$/);
+    if(!m){rows.push({i,raw:line,skip:true});return}
+    const d=+m[1],mo=+m[2];let y=+m[3];if(y<100)y+=2000;
+    const dt=new Date(Date.UTC(y,mo-1,d));
+    if(dt.getUTCFullYear()!==y||dt.getUTCMonth()!==mo-1||dt.getUTCDate()!==d){rows.push({i,raw:line,err:'такой даты нет в календаре'});return}
+    const name=m[4].trim().replace(/\s+/g,' ');
+    if(!name){rows.push({i,raw:line,err:'после даты нет названия'});return}
+    rows.push({i,raw:line,name:cap(name),date:num2iso(dayNum(y,mo,d))});
+  });
+  return rows;
+}
+const keyOf=r=>r.name.toLowerCase()+'|'+r.date;
+
+/* ---------- статусы и напоминания ---------- */
+function status(iso){
+  const left=iso2num(iso)-TODAY;
+  if(left<0)return{k:'bad',left,num:-left,cap:`${plural(-left,DAYS)} просрочки`,label:'Просрочен'};
+  if(left===0)return{k:'warn',left,num:0,cap:'сегодня последний день',label:'Сегодня'};
+  return{k:left<=3?'warn':'ok',left,num:left,cap:`${plural(left,DAYS)} до срока`,label:left<=3?'Скоро':'В норме'};
+}
+function remInfo(it){
+  const exp=iso2num(it.date),left=exp-TODAY,offs=it.offsets||[];
+  if(!offs.length)return{due:false,text:'Без напоминаний'};
+  if(left<0)return{due:true,text:'Каждый день, пока не уберёшь'};
+  if(offs.includes(left))return{due:true,text:`Сегодня в ${it.time}`};
+  const next=offs.map(o=>exp-o).filter(n=>n>TODAY).sort((a,b)=>a-b)[0];
+  return{due:false,text:next!==undefined?`Далее ${fmt(next,false)} в ${it.time}`:'Напоминания прошли'};
+}
+const offLabel=o=>o===0?'в день срока':`за ${o} ${plural(o,DAYS)}`;
+const remDatesText=(iso,offs)=>[...offs].sort((a,b)=>b-a).map(o=>fmt(iso2num(iso)-o,false)).join(', ')||'нет';
+
+/* ---------- штрихкод EAN-13 ---------- */
+const L=['0001101','0011001','0010011','0111101','0100011','0110001','0101111','0111011','0110111','0001011'];
+const G=['0100111','0110011','0011011','0100001','0011101','0111001','0000101','0010001','0001001','0010111'];
+const R=['1110010','1100110','1101100','1000010','1011100','1001110','1010000','1000100','1001000','1110100'];
+const PAR=['LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG','LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'];
+function checkDigit(b12){let s=0;for(let i=0;i<12;i++)s+=(+b12[i])*(i%2?3:1);return(10-s%10)%10}
+function ean13Svg(c){
+  const par=PAR[+c[0]];let bits='101';
+  for(let i=0;i<6;i++){const d=+c[i+1];bits+=par[i]==='L'?L[d]:G[d]}
+  bits+='01010';
+  for(let i=0;i<6;i++)bits+=R[+c[i+7]];
+  bits+='101';
+  const mw=2,q=9,h=90,gh=98,W=(95+2*q)*mw,H=gh+24;
+  const isGuard=i=>i<3||(i>=45&&i<50)||i>=92;
+  let rects='',i=0;
+  while(i<95){
+    if(bits[i]!=='1'){i++;continue}
+    const g=isGuard(i);let j=i;
+    while(j<95&&bits[j]==='1'&&isGuard(j)===g)j++;
+    rects+=`<rect x="${(q+i)*mw}" y="0" width="${(j-i)*mw}" height="${g?gh:h}"/>`;
+    i=j;
+  }
+  const ty=gh+17;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Штрихкод EAN-13 ${c}" xmlns="http://www.w3.org/2000/svg">
+    <g fill="#111" shape-rendering="crispEdges">${rects}</g>
+    <g fill="#111" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="15" font-weight="600">
+      <text x="${(q-5)*mw}" y="${ty}" text-anchor="middle">${c[0]}</text>
+      <text x="${(q+3)*mw+2}" y="${ty}" textLength="${42*mw-4}" lengthAdjust="spacing">${c.slice(1,7)}</text>
+      <text x="${(q+50)*mw+2}" y="${ty}" textLength="${42*mw-4}" lengthAdjust="spacing">${c.slice(7)}</text>
+    </g></svg>`;
+}
+function normCode(raw){
+  const d=String(raw||'').replace(/\D/g,'');
+  if(!d)return{ok:true,code:''};
+  if(d.length===12)return{ok:true,code:d+checkDigit(d)};
+  if(d.length===13){const cd=checkDigit(d.slice(0,12));return +d[12]===cd?{ok:true,code:d}:{ok:false,msg:`Контрольная цифра не сходится, должна быть ${cd}`}}
+  return{ok:false,msg:'Нужно 12 или 13 цифр'};
+}
+const spaced=c=>c?`${c[0]} ${c.slice(1,7)} ${c.slice(7)}`:'';
+
+/* ---------- сканер ---------- */
+const ZX_URL='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+let detector=null,zxPromise=null;
+const scan={stream:null,timer:null,reader:null,cb:null,busy:false};
+function getDetector(){
+  if(detector===null){try{detector='BarcodeDetector' in window?new window.BarcodeDetector({formats:['ean_13','upc_a']}):false}catch(e){detector=false}}
+  return detector;
+}
+function loadZX(){
+  if(window.ZXing)return Promise.resolve();
+  if(!zxPromise)zxPromise=new Promise((ok,fail)=>{const s=document.createElement('script');s.src=ZX_URL;s.onload=ok;s.onerror=()=>{zxPromise=null;fail()};document.head.appendChild(s)});
+  return zxPromise;
+}
+function zxHints(){
+  const h=new Map();
+  h.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS,[window.ZXing.BarcodeFormat.EAN_13,window.ZXing.BarcodeFormat.UPC_A]);
+  h.set(window.ZXing.DecodeHintType.TRY_HARDER,true);
+  return h;
+}
+function cleanCode(raw){
+  const d=String(raw||'').replace(/\D/g,'');
+  if(d.length===12)return '0'+d;
+  if(d.length===13&&+d[12]===checkDigit(d.slice(0,12)))return d;
+  return null;
+}
+const scanMsg=t=>{$('#scanMsg').textContent=t};
+function closeScanner(){
+  clearTimeout(scan.timer);clearInterval(scan.timer);scan.timer=null;
+  try{scan.reader&&scan.reader.reset()}catch(e){}
+  scan.reader=null;
+  if(scan.stream){scan.stream.getTracks().forEach(t=>t.stop());scan.stream=null}
+  const v=$('#scanVideo');v.srcObject=null;
+  $('#scan').hidden=true;document.body.style.overflow='';scan.cb=null;
+}
+function found(code){
+  const cb=scan.cb;
+  try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}
+  closeScanner();
+  if(cb)cb(code);
+}
+async function openScanner(cb){
+  scan.cb=cb;scan.busy=false;scanMsg('');
+  $('#scan').hidden=false;document.body.style.overflow='hidden';
+  const video=$('#scanVideo');
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){scanMsg('Камера недоступна. Нажми «Из фото».');return}
+  try{
+    scan.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    video.srcObject=scan.stream;await video.play();
+  }catch(e){scanMsg('Нет доступа к камере. Нажми «Из фото».');return}
+  const det=getDetector();
+  if(det){
+    scan.timer=setInterval(async()=>{
+      if(scan.busy||video.readyState<2||!scan.cb)return;scan.busy=true;
+      try{const r=await det.detect(video);for(const b of r){const c=cleanCode(b.rawValue);if(c){found(c);break}}}catch(e){}
+      scan.busy=false;
+    },220);
+  }else{
+    try{
+      await loadZX();
+      if($('#scan').hidden)return;
+      scan.reader=new window.ZXing.BrowserMultiFormatReader(zxHints());
+      scan.reader.decodeFromStream(scan.stream,video,(res)=>{if(res&&scan.cb){const c=cleanCode(res.getText());if(c)found(c)}});
+    }catch(e){scanMsg('Сканер не загрузился. Нажми «Из фото».')}
+  }
+}
+async function decodePhoto(file){
+  let code=null;
+  const det=getDetector();
+  if(det){
+    const bmp=await createImageBitmap(file);
+    const r=await det.detect(bmp);
+    for(const b of r){code=cleanCode(b.rawValue);if(code)break}
+  }else{
+    await loadZX();
+    const url=URL.createObjectURL(file);
+    try{const res=await new window.ZXing.BrowserMultiFormatReader(zxHints()).decodeFromImageUrl(url);code=cleanCode(res.getText())}
+    finally{URL.revokeObjectURL(url)}
+  }
+  return code;
+}
+$('#scanClose').addEventListener('click',closeScanner);
+$('#scanPhoto').addEventListener('change',async e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  scanMsg('Читаю фото…');
+  try{const c=await decodePhoto(f);if(c)found(c);else scanMsg('Штрихкод на фото не найден')}
+  catch(err){scanMsg('Штрихкод на фото не найден')}
+});
+
+/* ---------- иконки ---------- */
+const ICO={
+  bell:'<svg class="ic" width="14" height="14" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M6 17V11a6 6 0 1 1 12 0v6l1.5 2h-15L6 17zM10 21h4"/></svg>',
+  bellL:'<svg class="ic" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 1 1 12 0v6l1.5 2h-15L6 17zM10 21h4"/></svg>',
+  plus:'<svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  scan:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"/></svg>'
+};
+
+/* ---------- состояние интерфейса ---------- */
+let tab='import';
+const imp={text:'',excluded:new Set(),toAdd:[]};
+const ui={filter:'all',addOpen:false,mode:'until',catEdit:null,catQ:'',addBar:''};
+const bc={val:'',code:''};
+const view=$('#view');
+let tt;
+function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2800)}
+function setTab(t){tab=t;render();window.scrollTo(0,0)}
+function render(){
+  $$('.tab').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab?'page':'false'));
+  view.innerHTML=({import:viewImport,items:viewItems,catalog:viewCatalog,barcode:viewBarcode})[tab]();
+  ({import:bindImport,items:bindItems,catalog:bindCatalog,barcode:bindBarcode})[tab]();
+}
+
+/* =============== ИМПОРТ =============== */
+function viewImport(){
+  return `
+  <header class="head"><div><h1>Импорт</h1></div></header>
+  <div class="stack">
+    <section class="card">
+      <div class="field"><label for="src">Вставь текст</label><textarea id="src" spellcheck="false">${esc(imp.text)}</textarea></div>
+      <div class="btn-row">
+        <label class="btn" for="file">Выбрать файл</label>
+        <input id="file" type="file" accept=".txt,text/plain" hidden>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Напоминания</h2>
+      <div class="chips" id="offChips">${[7,5,4,3,2,1,0].map(o=>`<button type="button" class="chip ${settings.offsets.includes(o)?'on':''}" data-act="off" data-v="${o}" aria-pressed="${settings.offsets.includes(o)}">${offLabel(o)}</button>`).join('')}</div>
+      <div class="field"><label for="remTime">Время</label><input id="remTime" type="time" value="${esc(settings.time)}"></div>
+    </section>
+    <div id="pv"></div>
+  </div>`;
+}
+function updatePreview(){
+  const rows=parseNote(imp.text);
+  const existing=new Set(items.map(keyOf));
+  const ok=rows.filter(r=>r.date).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.i-b.i);
+  ok.forEach(r=>{r.dup=existing.has(keyOf(r))});
+  const errs=rows.filter(r=>r.err),skipped=rows.filter(r=>r.skip);
+  imp.toAdd=ok.filter(r=>!r.dup&&!imp.excluded.has(r.i));
+  const n=imp.toAdd.length;
+  const expired=imp.toAdd.filter(r=>status(r.date).k==='bad').length;
+  const soon=imp.toAdd.filter(r=>status(r.date).k==='warn').length;
+  const dups=ok.filter(r=>r.dup).length;
+  if(!rows.length){$('#pv').innerHTML='';return}
+  let html=`<div class="stack">
+    <div class="sum"><span class="pill ok">${n} к добавлению</span>${expired?`<span class="pill bad">${expired} просрочено</span>`:''}${soon?`<span class="pill warn">${soon} скоро</span>`:''}${dups?`<span class="pill dup">${dups} уже в списке</span>`:''}</div>
+    ${ok.length?`<div class="grid">${ok.map(r=>{
+      const s=status(r.date),off=imp.excluded.has(r.i);
+      return `<article class="tile ${off?'dim':''}"><span><span class="pill ${r.dup?'dup':s.k}">${r.dup?'Уже есть':s.label}</span></span>
+        <b class="t-name">${esc(r.name)}</b><span class="t-date">до ${fmt(iso2num(r.date))}</span>
+        <div class="t-bottom">${r.dup?'':`<div class="t-foot"><button class="link ${off?'':'bad'}" type="button" data-act="ex" data-v="${r.i}">${off?'Вернуть':'Не добавлять'}</button></div>`}</div></article>`}).join('')}</div>`:''}
+    ${errs.map(e=>`<div class="errrow"><code>${esc(e.raw)}</code><br>${esc(e.err)}</div>`).join('')}
+    ${skipped.length?`<p class="small muted">Без даты, пропущено: ${skipped.length}</p>`:''}
+    <div class="cta-wrap"><button class="btn primary full" id="doImport" type="button" ${n?'':'disabled'}>Добавить ${n}</button></div>
+  </div>`;
+  $('#pv').innerHTML=html;
+}
+function bindImport(){
+  const src=$('#src');
+  src.addEventListener('input',()=>{imp.text=src.value;imp.excluded.clear();updatePreview()});
+  $('#file').addEventListener('change',e=>{
+    const f=e.target.files&&e.target.files[0];if(!f)return;
+    f.text().then(t=>{imp.text=t;imp.excluded.clear();src.value=t;updatePreview()}).catch(()=>toast('Не удалось прочитать файл'));
+    e.target.value='';
+  });
+  $('#remTime').addEventListener('change',e=>{settings.time=e.target.value||'09:00';save()});
+  updatePreview();
+}
+function doImport(){
+  const add=imp.toAdd;if(!add.length)return;
+  let newCat=0;
+  add.forEach(r=>{
+    items.push({id:uid(),name:r.name,date:r.date,offsets:[...settings.offsets],time:settings.time});
+    if(!catalog.some(c=>c.name.toLowerCase()===r.name.toLowerCase())){catalog.push({id:uid(),name:r.name,shelfValue:null,shelfUnit:'мес',barcode:''});newCat++}
+  });
+  save();
+  imp.text='';imp.excluded.clear();ui.filter='all';
+  toast(`Добавлено ${add.length}${newCat?`, в каталог ${newCat}`:''}`);
+  setTab('items');
+}
+
+/* =============== ТОВАРЫ =============== */
+const sortedItems=()=>[...items].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.name.localeCompare(b.name,'ru'));
+function filtered(){
+  return sortedItems().filter(it=>{const s=status(it.date);return ui.filter==='all'||(ui.filter==='soon'&&s.k==='warn')||(ui.filter==='bad'&&s.k==='bad')});
+}
+function gridHtml(){
+  const arr=filtered();
+  if(!items.length)return `<div class="empty">Список пуст<button class="btn primary" data-act="goimport" type="button">Открыть импорт</button></div>`;
+  if(!arr.length)return `<div class="empty">Здесь ничего нет</div>`;
+  return `<div class="grid">${arr.map(it=>{
+    const s=status(it.date),r=remInfo(it);
+    return `<article class="tile"><b class="t-name">${esc(it.name)}</b><span class="t-date">до ${fmt(iso2num(it.date))}</span>
+      <div class="t-days ${s.k}"><strong>${s.num}</strong><span>${s.cap}</span></div>
+      <div class="t-bottom"><div class="t-rem ${r.due?'due':''}" title="Напоминания: ${remDatesText(it.date,it.offsets||[])}">${ICO.bell}<span>${esc(r.text)}</span></div>
+      <div class="t-foot"><button class="link bad" type="button" data-act="del" data-v="${it.id}">Убрать</button></div></div></article>`}).join('')}</div>`;
+}
+function viewItems(){
+  const nBad=items.filter(i=>status(i.date).k==='bad').length;
+  const nSoon=items.filter(i=>status(i.date).k==='warn').length;
+  const due=sortedItems().filter(i=>remInfo(i).due);
+  return `
+  <header class="head"><div><p class="eyebrow">${items.length} ${plural(items.length,['товар','товара','товаров'])} · напоминаний сегодня: ${due.length}</p><h1>Мои товары</h1></div>
+    <button class="fab" id="toggleAdd" type="button" aria-label="Добавить товар" aria-expanded="${ui.addOpen}">${ICO.plus}</button></header>
+  <div class="stack">
+  ${ui.addOpen?addFormHtml():''}
+  ${due.length?`<div class="banner">${ICO.bellL}<div><b>${due.length} ${plural(due.length,['напоминание','напоминания','напоминаний'])} о сроках</b><span>${due.slice(0,3).map(i=>esc(i.name)).join(' · ')}${due.length>3?'…':''}</span></div></div>`:''}
+  <div class="chips" id="flt">
+    <button class="chip ${ui.filter==='all'?'on':''}" data-act="flt" data-v="all" type="button">Все ${items.length}</button>
+    <button class="chip ${ui.filter==='soon'?'on':''}" data-act="flt" data-v="soon" type="button">Скоро ${nSoon}</button>
+    <button class="chip ${ui.filter==='bad'?'on':''}" data-act="flt" data-v="bad" type="button">Просрочен ${nBad}</button>
+  </div>
+  <div id="gridWrap">${gridHtml()}</div>
+  </div>`;
+}
+function addFormHtml(){
+  const prod=ui.mode==='prod';
+  return `<form class="card" id="addForm" autocomplete="off" novalidate>
+    <h2>Новый товар</h2>
+    <div class="field"><label for="aName">Название</label>
+      <div class="row"><input id="aName" type="text" enterkeyhint="next"><button class="sq" type="button" data-act="scanAdd" aria-label="Сканировать штрихкод">${ICO.scan}</button></div>
+      <div class="sug" id="sug"></div></div>
+    <p class="tagline" id="aBar">${ui.addBar?'Штрихкод '+spaced(ui.addBar):''}</p>
+    <div class="seg" role="group" aria-label="Какая дата известна">
+      <button type="button" data-act="mode" data-v="until" class="${prod?'':'on'}">Годен до</button>
+      <button type="button" data-act="mode" data-v="prod" class="${prod?'on':''}">Дата производства</button>
+    </div>
+    <div class="field"><label for="aDate" id="aDateLbl">${prod?'Дата производства':'Годен до'}</label><input id="aDate" type="date"></div>
+    <div class="field" id="shelfRow" ${prod?'':'hidden'}><label for="aVal">Срок годности</label>
+      <div class="inline"><input id="aVal" type="number" min="1" inputmode="numeric">
+      <select id="aUnit"><option value="д">дней</option><option value="мес" selected>месяцев</option><option value="г">лет</option></select></div></div>
+    <p class="calc" id="calc"></p>
+    <p class="err" id="aErr" role="alert"></p>
+    <button class="btn primary full" type="submit">Добавить</button>
+  </form>`;
+}
+function updateGrid(){
+  $('#gridWrap').innerHTML=gridHtml();
+  $$('#flt .chip').forEach(c=>c.classList.toggle('on',c.dataset.v===ui.filter));
+}
+function sugList(q){
+  q=q.trim().toLowerCase();if(!q)return[];
+  const m=new Map();
+  catalog.forEach(c=>m.set(c.name.toLowerCase(),c));
+  items.forEach(i=>{const k=i.name.toLowerCase();if(!m.has(k))m.set(k,{name:i.name})});
+  return[...m.values()].filter(c=>c.name.toLowerCase().includes(q)&&c.name.toLowerCase()!==q).slice(0,6);
+}
+function updateCalc(){
+  const calc=$('#calc');if(!calc)return;
+  if(ui.mode!=='prod'){calc.textContent='';return}
+  const d=$('#aDate').value,v=+$('#aVal').value,u=$('#aUnit').value;
+  calc.textContent=d&&v>0?`Годен до ${fmt(addShelf(iso2num(d),v,u))}`:'';
+}
+function setMode(m){
+  ui.mode=m;
+  $$('#addForm .seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===m));
+  $('#shelfRow').hidden=m!=='prod';
+  $('#aDateLbl').textContent=m==='prod'?'Дата производства':'Годен до';
+  updateCalc();
+}
+function fillFromCatalog(c){
+  $('#aName').value=c.name;$('#sug').innerHTML='';
+  if(c.shelfValue){setMode('prod');$('#aVal').value=c.shelfValue;$('#aUnit').value=c.shelfUnit;updateCalc()}
+  $('#aDate').focus();
+}
+function upsertCatalog(name,extra){
+  const c=catalog.find(c=>c.name.toLowerCase()===name.toLowerCase());
+  if(c)Object.assign(c,extra);
+  else catalog.push(Object.assign({id:uid(),name:cap(name),shelfValue:null,shelfUnit:'мес',barcode:''},extra));
+}
+function bindItems(){
+  const f=$('#addForm');if(!f)return;
+  const name=$('#aName');
+  name.addEventListener('input',()=>{
+    $('#sug').innerHTML=sugList(name.value).map(c=>`<button type="button" data-act="sug" data-v="${esc(c.name)}">${esc(c.name)}<span>${c.shelfValue?shelfStr(c):''}</span></button>`).join('');
+  });
+  ['aDate','aVal','aUnit'].forEach(id=>$('#'+id).addEventListener('input',updateCalc));
+  f.addEventListener('submit',e=>{
+    e.preventDefault();
+    const n=name.value.trim(),d=$('#aDate').value,v=+$('#aVal').value,u=$('#aUnit').value,err=$('#aErr');
+    if(!n){err.textContent='Введи название товара.';return}
+    if(!d){err.textContent=ui.mode==='prod'?'Укажи дату производства.':'Укажи дату, до которой товар годен.';return}
+    const extra={};if(ui.addBar)extra.barcode=ui.addBar;
+    let iso=d;
+    if(ui.mode==='prod'){
+      if(!(v>0)){err.textContent='Укажи срок годности.';return}
+      iso=num2iso(addShelf(iso2num(d),v,u));
+      extra.shelfValue=v;extra.shelfUnit=u;
+    }
+    upsertCatalog(n,extra);
+    items.push({id:uid(),name:cap(n),date:iso,offsets:[...settings.offsets],time:settings.time});
+    save();ui.addOpen=false;ui.addBar='';ui.filter='all';
+    toast(`«${cap(n)}» добавлен, годен до ${fmt(iso2num(iso))}`);render();
+  });
+}
+
+/* =============== КАТАЛОГ =============== */
+function catalogSorted(){
+  const q=ui.catQ.trim().toLowerCase();
+  return[...catalog].filter(c=>!q||c.name.toLowerCase().includes(q)||(c.barcode||'').includes(q)).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+}
+function catGridHtml(){
+  const list=catalogSorted();
+  if(!list.length)return `<div class="empty">${catalog.length?'Ничего не найдено':'Каталог пуст'}</div>`;
+  return `<div class="grid">${list.map(c=>`<article class="tile"><b class="t-name">${esc(c.name)}</b>
+    <span class="t-date">${c.shelfValue?'Срок: '+shelfStr(c):'Срок не указан'}</span>
+    ${c.barcode?`<span class="mono">${spaced(c.barcode)}</span>`:''}
+    <div class="t-bottom"><div class="t-foot"><button class="link" type="button" data-act="catEdit" data-v="${c.id}">Изменить</button>
+    ${c.barcode?`<button class="link" type="button" data-act="catBc" data-v="${c.id}">Штрихкод</button>`:''}
+    <button class="link bad" type="button" data-act="catDel" data-v="${c.id}">Удалить</button></div></div></article>`).join('')}</div>`;
+}
+function viewCatalog(){
+  const e=catalog.find(c=>c.id===ui.catEdit)||null;
+  return `
+  <header class="head"><div><h1>Каталог</h1></div></header>
+  <div class="stack">
+    <form class="card" id="catForm" autocomplete="off" novalidate>
+      <h2>${e?'Изменить товар':'Новый товар'}</h2>
+      <div class="field"><label for="cName">Название</label><input id="cName" type="text" value="${e?esc(e.name):''}"></div>
+      <div class="field"><label for="cVal">Срок годности</label>
+        <div class="inline"><input id="cVal" type="number" min="1" inputmode="numeric" value="${e&&e.shelfValue?e.shelfValue:''}">
+        <select id="cUnit">${[['д','дней'],['мес','месяцев'],['г','лет']].map(([v,l])=>`<option value="${v}" ${(e?e.shelfUnit:'мес')===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
+      <div class="chips">${[[6,'мес'],[18,'мес'],[2,'г'],[270,'д']].map(([v,u])=>`<button type="button" class="chip" data-act="quick" data-v="${v}" data-u="${u}">${v} ${plural(v,UNITS[u])}</button>`).join('')}</div>
+      <div class="field"><label for="cBar">Штрихкод</label>
+        <div class="row"><input id="cBar" type="text" inputmode="numeric" value="${e?esc(e.barcode):''}"><button class="sq" type="button" data-act="scanCat" aria-label="Сканировать штрихкод">${ICO.scan}</button></div></div>
+      <p class="err" id="cErr" role="alert"></p>
+      <div class="btn-row"><button class="btn primary" type="submit">${e?'Сохранить':'Добавить'}</button>${e?'<button class="btn" type="button" data-act="catCancel">Отмена</button>':''}</div>
+    </form>
+    <div class="field"><label for="cSearch">Поиск</label><input id="cSearch" type="text" value="${esc(ui.catQ)}"></div>
+    <div id="catWrap">${catGridHtml()}</div>
+  </div>`;
+}
+function bindCatalog(){
+  $('#cSearch').addEventListener('input',e=>{ui.catQ=e.target.value;$('#catWrap').innerHTML=catGridHtml()});
+  $('#catForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const n=$('#cName').value.trim(),v=+$('#cVal').value,u=$('#cUnit').value,err=$('#cErr');
+    if(!n){err.textContent='Введи название товара.';return}
+    const code=normCode($('#cBar').value);
+    if(!code.ok){err.textContent=code.msg;return}
+    const data={name:cap(n),shelfValue:v>0?v:null,shelfUnit:u,barcode:code.code};
+    if(ui.catEdit){Object.assign(catalog.find(c=>c.id===ui.catEdit),data);ui.catEdit=null}
+    else{
+      const dup=catalog.find(c=>c.name.toLowerCase()===n.toLowerCase());
+      if(dup)Object.assign(dup,data);else catalog.push(Object.assign({id:uid()},data));
+    }
+    save();toast('Сохранено');render();
+  });
+}
+
+/* =============== ШТРИХКОД =============== */
+function viewBarcode(){
+  return `
+  <header class="head"><div><h1>Штрихкод</h1></div></header>
+  <div class="stack">
+    <section class="card">
+      <div class="field"><label for="bcIn">Основа EAN-13</label>
+        <div class="row"><input id="bcIn" class="bigin" type="text" inputmode="numeric" maxlength="13" autocomplete="off" value="${esc(bc.val)}"><button class="sq" type="button" id="bcScan" aria-label="Сканировать штрихкод">${ICO.scan}</button></div></div>
+      <div id="bcOut"></div>
+    </section>
+    <div class="btn-row"><button class="btn primary" type="button" id="bcCopy">Копировать</button><button class="btn" type="button" id="bcRand">Новый код</button></div>
+    ${catalog.length?`<section class="card"><div class="field"><label for="bcProd">Привязать к товару</label>
+        <div class="inline"><select id="bcProd">${[...catalog].sort((a,b)=>a.name.localeCompare(b.name,'ru')).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
+        <button class="btn" type="button" id="bcBind">Привязать</button></div></div></section>`:''}
+  </div>`;
+}
+function updateBarcode(){
+  const out=$('#bcOut');const d=bc.val.replace(/\D/g,'');bc.code='';
+  if(d.length<12){out.innerHTML='';return}
+  const r=normCode(d);
+  if(!r.ok){out.innerHTML=`<div class="check bad"><div class="n">!</div><div><b>Проверка не пройдена</b><span>${esc(r.msg)}</span></div></div>`;return}
+  bc.code=r.code;
+  out.innerHTML=`<div class="stack"><div class="check"><div class="n">${r.code[12]}</div><div><b>Контрольная цифра</b></div></div>
+    <div class="codebox">${ean13Svg(r.code)}</div></div>`;
+}
+function bindBarcode(){
+  const inp=$('#bcIn');
+  inp.addEventListener('input',()=>{inp.value=inp.value.replace(/\D/g,'').slice(0,13);bc.val=inp.value;updateBarcode()});
+  $('#bcScan').addEventListener('click',()=>openScanner(code=>{bc.val=code;inp.value=code;updateBarcode()}));
+  $('#bcRand').addEventListener('click',()=>{
+    let s='2';for(let i=0;i<11;i++)s+=Math.floor(Math.random()*10);
+    bc.val=s;inp.value=s;updateBarcode();
+  });
+  $('#bcCopy').addEventListener('click',()=>{
+    if(!bc.code){toast('Сначала введи 12 цифр');return}
+    const t=bc.code;
+    const fallback=()=>{inp.value=t;inp.focus();inp.select();toast('Выдели номер и скопируй вручную')};
+    try{navigator.clipboard.writeText(t).then(()=>toast('Номер скопирован'),fallback)}catch(e){fallback()}
+  });
+  const bind=$('#bcBind');
+  if(bind)bind.addEventListener('click',()=>{
+    if(!bc.code){toast('Сначала введи 12 цифр');return}
+    const c=catalog.find(c=>c.id===$('#bcProd').value);if(!c)return;
+    c.barcode=bc.code;save();toast(`Привязан к «${c.name}»`);
+  });
+  updateBarcode();
+}
+
+/* =============== общие события =============== */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('.tab');if(t){setTab(t.dataset.tab);return}
+  if(e.target.closest('#toggleAdd')){ui.addOpen=!ui.addOpen;ui.mode='until';ui.addBar='';render();if(ui.addOpen){const n=$('#aName');n&&n.focus()}return}
+  if(e.target.closest('#doImport')){doImport();return}
+  const a=e.target.closest('[data-act]');if(!a)return;
+  const v=a.dataset.v;
+  switch(a.dataset.act){
+    case 'off':{
+      const o=+v,i=settings.offsets.indexOf(o);
+      if(i>=0)settings.offsets.splice(i,1);else settings.offsets.push(o);
+      settings.offsets.sort((x,y)=>y-x);save();
+      $$('#offChips .chip').forEach(c=>{const on=settings.offsets.includes(+c.dataset.v);c.classList.toggle('on',on);c.setAttribute('aria-pressed',on)});
+      break}
+    case 'ex':{const i=+v;imp.excluded.has(i)?imp.excluded.delete(i):imp.excluded.add(i);updatePreview();break}
+    case 'goimport':setTab('import');break;
+    case 'flt':ui.filter=v;updateGrid();break;
+    case 'del':{
+      const it=items.find(i=>i.id===v);items=items.filter(i=>i.id!==v);save();
+      toast(`«${it?it.name:'Товар'}» убран`);render();break}
+    case 'mode':setMode(v);break;
+    case 'sug':{const c=catalog.find(c=>c.name===v)||{name:v};fillFromCatalog(c);break}
+    case 'scanAdd':openScanner(code=>{
+      ui.addBar=code;$('#aBar').textContent='Штрихкод '+spaced(code);
+      const c=catalog.find(c=>c.barcode===code);
+      if(c)fillFromCatalog(c);else{toast('Нового товара нет в каталоге');$('#aName').focus()}
+    });break;
+    case 'scanCat':openScanner(code=>{
+      const ex=catalog.find(c=>c.barcode===code);
+      if(ex&&ex.id!==ui.catEdit){toast('Такой штрихкод уже в каталоге');ui.catEdit=ex.id;render();window.scrollTo(0,0);return}
+      $('#cBar').value=code;
+    });break;
+    case 'quick':$('#cVal').value=v;$('#cUnit').value=a.dataset.u;break;
+    case 'catEdit':ui.catEdit=v;render();window.scrollTo(0,0);break;
+    case 'catCancel':ui.catEdit=null;render();break;
+    case 'catDel':catalog=catalog.filter(c=>c.id!==v);if(ui.catEdit===v)ui.catEdit=null;save();toast('Удалено');render();break;
+    case 'catBc':{const c=catalog.find(c=>c.id===v);if(c){bc.val=c.barcode;setTab('barcode')}break}
+  }
+});
+
+/* =============== запуск =============== */
+if(TG){try{TG.ready();TG.expand();TG.setHeaderColor('#071F22');TG.setBackgroundColor('#071F22');TG.setBottomBarColor&&TG.setBottomBarColor('#0D2C2F');TG.disableVerticalSwipes&&TG.disableVerticalSwipes()}catch(e){}}
+render();
+if(CS){
+  (async()=>{
+    try{
+      const [i,c,s]=await Promise.all([cloudRead('items'),cloudRead('catalog'),cloudRead('settings')]);
+      if(i||c||s){
+        if(i)items=i;if(c)catalog=c;if(s)settings=Object.assign({},DEF_SET,s);
+        local.set('items',items);local.set('catalog',catalog);local.set('settings',settings);
+        render();
+      }else if(items.length||catalog.length)flush();
+    }catch(e){}
+  })();
+}
+})();
+</script>
+
+</body>
+</html>
